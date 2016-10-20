@@ -4,7 +4,8 @@
   "description": "Body parser for spirit.",
   "main": "build/",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "postpublish": "PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]') && git tag $PACKAGE_VERSION && git push --tags"
   },
   "repository": {
     "type": "git",
