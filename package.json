@@ -1,6 +1,6 @@
 {
   "name": "spirit-body",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Body parser for spirit.",
   "main": "build/",
   "scripts": {
