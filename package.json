@@ -1,0 +1,36 @@
+{
+  "name": "spirit-body",
+  "version": "0.0.0",
+  "description": "Body parser for spirit.",
+  "main": "build/",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dodekeract/spirit-body.git"
+  },
+  "keywords": [
+    "spirit",
+    "body",
+    "spiritjs",
+    "spirit-js",
+    "parser",
+    "json",
+    "xml",
+    "post",
+    "delete",
+    "put"
+  ],
+  "author": "Florian Wendelborn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dodekeract/spirit-body/issues"
+  },
+  "homepage": "https://github.com/dodekeract/spirit-body#readme",
+  "devDependencies": {
+    "babel-cli": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0",
+    "nodemon": "^1.11.0"
+  }
+}
