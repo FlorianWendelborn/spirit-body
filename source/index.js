@@ -42,9 +42,10 @@ export default (options = {
 
 			// parse key-value pairs
 			let match
-			while ([key, value] = keyValueRegex.exec(raw))
-				result[sanitize(key)] = sanitize(value)
-
+			while (match = keyValueRegex.exec(raw)) {
+				const [,key, value] = match.map(sanitize)
+				result[key] = value
+			}
 			// set body
 			request.body = result
 
