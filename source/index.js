@@ -1,43 +1,65 @@
 /**
- * @description Global Body-Parsing Middleware
+ * @description Body-Parsing Middleware
+ * This is a curried function with options, so you have to
+ * call it once before passing it to spirit
+ * @example const body = spiritBody({json: true, urlEncoded: true, multiPart: true})
  */
-export default handler => request => {
-	return new Promise((resolve, reject) => {
-		const req = request.req();
+export default (options = {
+	multiPart: false,
+	json: false,
+	urlEncoded: false
+}) => handler => request => new Promise((resolve, reject) => {
+	const req = request.req()
 
-		// Push to array for (most likely) improved concatenation performance.
+	// Push to array for (most likely) improved concatenation performance
+	const chunks = []
+	req.on('data', data =>
+		chunks.push(
+			data.toString()
+		)
+	)
 
-		const chunks = [];
+	// connection ended
+	req.on('end', () => {
+		const raw = chunks.join('')
 
-		// data received
+		// lowercase headers
+		const lowercaseHeaders = Object
+			.keys(request.headers)
+			.map(key => ({
+				[key.toLowerCase()]: request.headers[key]
+			}))
+			.reduce((previous, current) => Object.assign(previous, current), {})
 
-		req.on('data', data => chunks.push(data.toString());
+		// parse
+		const [type] = (lowercaseHeaders['content-type'] || '').split(';')
 
-		// connection ended
+		if (options.urlEncoded && type === 'application/x-www-form-urlencoded') {
 
-		req.on('end', () => {
-			const whole = chunks.join('');
-			// lowercase every key.
-			const normalizedHeaders = Object.keys(request.headers)
-				.reduce((prev, curr) => Object.assign(prev, { [curr.toLowerCase()]: request.headers[curr] }), {});
-			const contentType = normalizedHeaders['content-type'] || '';
+			const result = {}
+			const keyValueRegex = /([^&=]+)=?([^&]*)/g
+			const sanitize = input => decodeURIComponent(input.replace(/[+]/g, ' '))
 
-			// default: return the body as a string
-			request.body = whole;
+			// parse key-value pairs
+			let match
+			while ([key, value] = keyValueRegex.exec(raw))
+				result[sanitize(key)] = sanitize(value)
 
-			if (contentType.indexOf('application/x-www-form-urlencoded') >= 0) {
-				const body = {};
-				const keyValueRegex = /([^&=]+)=?([^&]*)/g;
-				const sanitize = (str) => decodeURIComponent(str.replace('+', ' '));
-				let match;
+			// set body
+			request.body = result
 
-				while (match = keyValueRegex.exec(whole))
-					body[sanitize(match[1])] = sanitize(match[2]);
+		} else if (options.json && ['application/json', 'text/json'].includes(type)) {
 
-				request.body = body
-			}
+			request.body = JSON.parse(raw)
 
-			resolve(handler(request));
-		});
+		} else if (!'TODO' && options.multiPart && type === 'multipart/form-data') {
+
+			// TODO
+
+		} else {
+			request.body = raw
+		}
+
+		resolve(handler(request))
 	});
-};
+})
