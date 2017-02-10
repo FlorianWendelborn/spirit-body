@@ -23,35 +23,35 @@ describe('urlencodedParser', function () {
 
   it('should return an object', function () {
     const prom = urlencodedParser(identity)(request);
-    request.req().emit('data', '{}')
+    request.req().emit('data', Buffer.from('{}'))
     request.req().emit('end');
     return prom.then(function (obj) { return expect(obj).to.be.a('object') });
   });
 
   it('parse a form with one key', function () {
     const prom = urlencodedParser(identity)(request);
-    request.req().emit('data', 'key=');
+    request.req().emit('data', Buffer.from('key='));
     request.req().emit('end');
     return prom.then(function (obj) { return expect(obj.body['key']).to.not.equal(undefined) });
   });
 
   it('should decode URI components', function () {
     const prom = urlencodedParser(identity)(request);
-    request.req().emit('data', 'key=!%40%23%24%25%5E%26*()_%2B');
+    request.req().emit('data', Buffer.from('key=!%40%23%24%25%5E%26*()_%2B'));
     request.req().emit('end');
     return prom.then(function (obj) { return expect(obj.body['key']).to.equal('!@#$%^&*()_+') });
   });
 
   it('should eliminate "+" from the body', function () {
     const prom = urlencodedParser(identity)(request);
-    request.req().emit('data', 'key=plus+delimited+input');
+    request.req().emit('data', Buffer.from('key=plus+delimited+input'));
     request.req().emit('end');
     return prom.then(function (obj) { return expect(obj.body['key']).to.equal('plus delimited input') });
   });
 
   it('should parse multikey forms', function () {
     const prom = urlencodedParser(identity)(request);
-    request.req().emit('data', 'key1=some+value&key2=another+value');
+    request.req().emit('data', Buffer.from('key1=some+value&key2=another+value'));
     request.req().emit('end');
     return prom.then(function (obj) {
       return expect(obj.body).to.eql({
@@ -69,21 +69,21 @@ describe('jsonParser', function () {
 
   it('should return an object', function () {
     const prom = jsonParser(identity)(request);
-    request.req().emit('data', '{}')
+    request.req().emit('data', Buffer.from('{}'))
     request.req().emit('end');
     return prom.then(function (obj) { return expect(obj).to.be.a('object') });
   });
 
   it('parse a form with one key', function () {
     const prom = jsonParser(identity)(request);
-    request.req().emit('data', '{ "key": "value"}');
+    request.req().emit('data', Buffer.from('{ "key": "value"}'));
     request.req().emit('end');
     return prom.then(function (obj) { return expect(obj.body['key']).to.equal('value') });
   });
 
   it('should parse multikey forms', function () {
     const prom = jsonParser(identity)(request);
-    request.req().emit('data', '{ "key1": "some value", "key2": "another value" }');
+    request.req().emit('data', Buffer.from('{ "key1": "some value", "key2": "another value" }'));
     request.req().emit('end');
     return prom.then(function (obj) {
       return expect(obj.body).to.eql({
