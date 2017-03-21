@@ -14,7 +14,7 @@ export default (options = {
 
 	// Push to array for (most likely) improved concatenation performance
 	const chunks = [];
-	req.on('data', data => chunks.push(data));
+	req.on('data', chunks.push);
 
 	// connection ended
 	req.on('end', () => {
