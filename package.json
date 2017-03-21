@@ -38,7 +38,7 @@
   },
   "scripts": {
     "build": "babel source -d build",
-    "postpublish": "PACKAGE_VERSION=$(node -e \"console.log(require('./package.json').version)\" && git tag $PACKAGE_VERSION && git push --tags",
+    "postpublish": "PACKAGE_VERSION=$(node -e \"console.log(require('./package.json').version)\") && git tag $PACKAGE_VERSION && git push --tags",
     "test": "yarn run test-build && mocha build/test",
     "test-build": "yarn run build && babel test -d build/test"
   },
