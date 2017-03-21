@@ -41,7 +41,7 @@ describe('urlencodedParser', () => {
 		request.req().emit('data', Buffer.from('key='))
 		request.req().emit('end')
 		return prom.then(response =>
-			expect(response.body['key']).to.not.equal(undefined)
+			expect(response.body.key).to.not.equal(undefined)
 		)
 	})
 
@@ -50,7 +50,7 @@ describe('urlencodedParser', () => {
 		request.req().emit('data', Buffer.from('key=!%40%23%24%25%5E%26*()_%2B'))
 		request.req().emit('end')
 		return prom.then(response =>
-			expect(response.body['key']).to.equal('!@#$%^&*()_+')
+			expect(response.body.key).to.equal('!@#$%^&*()_+')
 		)
 	})
 
@@ -59,7 +59,7 @@ describe('urlencodedParser', () => {
 		request.req().emit('data', Buffer.from('key=plus+delimited+input'))
 		request.req().emit('end')
 		return prom.then(response =>
-			expect(response.body['key']).to.equal('plus delimited input')
+			expect(response.body.key).to.equal('plus delimited input')
 		)
 	})
 
@@ -100,7 +100,7 @@ describe('jsonParser', () => {
 		request.req().emit('data', Buffer.from('{ "key": "value"}'))
 		request.req().emit('end')
 		return prom.then(response =>
-			expect(response.body['key']).to.equal('value')
+			expect(response.body.key).to.equal('value')
 		)
 	})
 

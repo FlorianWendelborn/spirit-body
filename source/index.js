@@ -18,8 +18,9 @@ export default (options = {
 
 	// connection ended
 	req.on('end', () => {
-		// concat the chunks and convert to String---that's ok, because we are only
-		// being sent plaintext, Buffer defaults to utf8. TODO: check for other enc.
+		// concat the chunks and convert to String — that's ok, because
+		// we only receive plaintext. Buffer defaults to UTF-8.
+		// TODO: check for other encodings
 		const raw = Buffer.concat(chunks).toString()
 
 		// convert the headers to lowercase for easier comparison
@@ -31,7 +32,6 @@ export default (options = {
 			.reduce((previous, current) => Object.assign(previous, current), {})
 
 		const [type] = (lowercaseHeaders['content-type'] || '').split(';')
-
 		if (options.urlEncoded && type === 'application/x-www-form-urlencoded') {
 			const result = {}
 			const keyValueRegex = /([^&=]+)=?([^&]*)/g
