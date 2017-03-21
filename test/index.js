@@ -1,6 +1,6 @@
 // region import
 const bodyParser = require('../build/').default
-const expect = require('chai').expect
+const {expect} = require('chai')
 const events = require('events')
 // endregion
 

@@ -7,8 +7,8 @@
  * @example const body = spiritBody({json: true, urlEncoded: true})
  */
 export default (options = {
-	multiPart: false,
 	json: false,
+	urlEncoded: false
 }) => handler => request => new Promise((resolve, reject) => {
 	const req = request.req()
 
@@ -39,7 +39,7 @@ export default (options = {
 
 			let match
 			while (match = keyValueRegex.exec(raw)) {
-				const [, key, value] = match.map(sanitize);
+				const [, key, value] = match.map(sanitize)
 				result[key] = value
 			}
 			request.body = result
