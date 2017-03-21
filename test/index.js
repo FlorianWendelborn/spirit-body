@@ -1,105 +1,121 @@
-const { default: bodyParser } = require('../build/')
+// region import
+const bodyParser = require('../build/').default
+const expect = require('chai').expect
 const events = require('events')
-const chai = require('chai')
+// endregion
 
-const urlencodedParser = bodyParser({ urlEncoded: true })
+// region setup spirit-body
 const jsonParser = bodyParser({ json: true })
+const urlencodedParser = bodyParser({ urlEncoded: true })
+// endregion
 
-const identity = function(id) { return id }
+// region test
+// #region test setup
 let request
-
-const expect = chai.expect
-
-beforeEach(function() {
+beforeEach(() => {
 	request = {}
 	const requestObj = new events.EventEmitter()
 	request.req = () => requestObj
 })
+// #endregion
 
-describe('urlencodedParser', function() {
-	beforeEach(function() {
-		request.headers = { 'content-type': 'application/x-www-form-urlencoded' }
+// #region test UrlEncoded
+describe('urlencodedParser', () => {
+	beforeEach(() => {
+		request.headers = {
+			'Content-Type': 'application/x-www-form-urlencoded'
+		}
 	})
 
-	it('should return an object', function() {
-		const prom = urlencodedParser(identity)(request)
+	it('should return an object', () => {
+		const prom = urlencodedParser(id => id)(request)
 		request.req().emit('data', Buffer.from('{}'))
 		request.req().emit('end')
-		return prom.then(function(obj) { return expect(obj).to.be.a('object') })
+		return prom.then(response =>
+			expect(response).to.be.a('object')
+		)
 	})
 
-	it('parse a form with one key', function() {
-		const prom = urlencodedParser(identity)(request)
+	it('parse a form with one key', () => {
+		const prom = urlencodedParser(id => id)(request)
 		request.req().emit('data', Buffer.from('key='))
 		request.req().emit('end')
-		return prom.then(function(obj) {
-			return expect(obj.body['key']).to.not.equal(undefined)
-		})
+		return prom.then(response =>
+			expect(response.body['key']).to.not.equal(undefined)
+		)
 	})
 
-	it('should decode URI components', function() {
-		const prom = urlencodedParser(identity)(request)
+	it('should decode URI components', () => {
+		const prom = urlencodedParser(id => id)(request)
 		request.req().emit('data', Buffer.from('key=!%40%23%24%25%5E%26*()_%2B'))
 		request.req().emit('end')
-		return prom.then(function(obj) {
-			return expect(obj.body['key']).to.equal('!@#$%^&*()_+')
-		})
+		return prom.then(response =>
+			expect(response.body['key']).to.equal('!@#$%^&*()_+')
+		)
 	})
 
-	it('should eliminate "+" from the body', function() {
-		const prom = urlencodedParser(identity)(request)
+	it('should eliminate "+" from the body', () => {
+		const prom = urlencodedParser(id => id)(request)
 		request.req().emit('data', Buffer.from('key=plus+delimited+input'))
 		request.req().emit('end')
-		return prom.then(function(obj) {
-			return expect(obj.body['key']).to.equal('plus delimited input')
-		})
+		return prom.then(response =>
+			expect(response.body['key']).to.equal('plus delimited input')
+		)
 	})
 
-	it('should parse multikey forms', function() {
-		const prom = urlencodedParser(identity)(request)
+	it('should parse multikey forms', () => {
+		const prom = urlencodedParser(id => id)(request)
 		request.req().emit('data',
 			Buffer.from('key1=some+value&key2=another+value'))
 		request.req().emit('end')
-		return prom.then(function(obj) {
-			return expect(obj.body).to.eql({
+		return prom.then(response =>
+			expect(obj.body).to.eql({
 				'key1': 'some value',
 				'key2': 'another value',
 			})
-		})
+		)
 	})
 })
+// #endregion
 
-describe('jsonParser', function() {
-	beforeEach(function() {
-		request.headers = { 'content-type': 'application/json' }
+// #region test JSON
+describe('jsonParser', () => {
+	beforeEach(() => {
+		request.headers = {
+			'Content-Type': 'application/json'
+		}
 	})
 
-	it('should return an object', function() {
-		const prom = jsonParser(identity)(request)
+	it('should return an object', () => {
+		const prom = jsonParser(id => id)(request)
 		request.req().emit('data', Buffer.from('{}'))
 		request.req().emit('end')
-		return prom.then(function(obj) { return expect(obj).to.be.a('object') })
+		return prom.then(response =>
+			expect(response).to.be.a('object')
+		)
 	})
 
-	it('parse a form with one key', function() {
-		const prom = jsonParser(identity)(request)
+	it('parse a form with one key', () => {
+		const prom = jsonParser(id => id)(request)
 		request.req().emit('data', Buffer.from('{ "key": "value"}'))
 		request.req().emit('end')
-		return prom.then(function(obj) {
-			return expect(obj.body['key']).to.equal('value')
-		})
+		return prom.then(response =>
+			expect(response.body['key']).to.equal('value')
+		)
 	})
 
-	it('should parse multikey forms', function() {
-		const prom = jsonParser(identity)(request)
+	it('should parse multikey forms', () => {
+		const prom = jsonParser(id => id)(request)
 		request.req().emit('data',
 			Buffer.from('{ "key1": "some value", "key2": "another value" }'))
 		request.req().emit('end')
-		return prom.then(function(obj) {
-			return expect(obj.body).to.eql({
-				'key1': 'some value',
-				'key2': 'another value',
+		return prom.then(response =>
+			expect(response.body).to.eql({
+				key1: 'some value',
+				key2: 'another value',
 			})
-		})
+		)
 	})
 })
+// #endregion
+// endregion
