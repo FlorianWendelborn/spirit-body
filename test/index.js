@@ -70,8 +70,8 @@ describe('urlencodedParser', () => {
 		request.req().emit('end')
 		return prom.then(response =>
 			expect(response.body).to.eql({
-				'key1': 'some value',
-				'key2': 'another value',
+				key1: 'some value',
+				key2: 'another value',
 			})
 		)
 	})
@@ -106,14 +106,21 @@ describe('jsonParser', () => {
 
 	it('should parse multikey forms', () => {
 		const prom = jsonParser(id => id)(request)
-		request.req().emit('data',
-			Buffer.from('{ "key1": "some value", "key2": "another value" }'))
+		const expected = {
+			key1: 'some value',
+			key2: 'another value',
+			a: {
+				b: {
+					c: 'd'
+				}
+			}
+		}
+		request.req().emit('data', Buffer.from(
+			JSON.stringify(expected)
+		))
 		request.req().emit('end')
 		return prom.then(response =>
-			expect(response.body).to.eql({
-				key1: 'some value',
-				key2: 'another value',
-			})
+			expect(response.body).to.eql(expected)
 		)
 	})
 })
