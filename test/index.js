@@ -69,7 +69,7 @@ describe('urlencodedParser', () => {
 			Buffer.from('key1=some+value&key2=another+value'))
 		request.req().emit('end')
 		return prom.then(response =>
-			expect(obj.body).to.eql({
+			expect(response.body).to.eql({
 				'key1': 'some value',
 				'key2': 'another value',
 			})
