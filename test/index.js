@@ -1,7 +1,7 @@
 // region import
-const bodyParser = require('../build/').default
-const {expect} = require('chai')
-const events = require('events')
+import bodyParser from '../'
+import events from 'events'
+import {expect} from 'chai'
 // endregion
 
 // region setup spirit-body
