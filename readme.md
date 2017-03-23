@@ -9,7 +9,6 @@ Supports Raw, JSON and URL-encoded bodies.
 [![Coverage Status](https://coveralls.io/repos/dodekeract/spirit-body/badge.svg?branch=master&service=github)](https://coveralls.io/github/dodekeract/spirit-body?branch=master)
 [![NPM Downloads](https://img.shields.io/npm/dt/spirit-body.svg)](https://npmjs.com/package/spirit-body)
 [![NPM Dependencies](https://david-dm.org/dodekeract/spirit-body.svg)](https://npmjs.com/package/spirit-body)
-[![Code Documentation](https://inch-ci.org/github/dodekeract/spirit-body.svg)](https://inch-ci.org/github/dodekeract/spirit-body)
 
 ## Usage
 
