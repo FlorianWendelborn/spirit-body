@@ -45,5 +45,5 @@
     "test-build": "yarn run build && babel test -d build/test",
     "travis": "yarn run test-build && istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec build/test"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
