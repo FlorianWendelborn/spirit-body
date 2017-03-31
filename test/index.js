@@ -1,12 +1,12 @@
 // region import
-import bodyParser from '../'
+import bodyParser from '../source'
 import events from 'events'
 import {expect} from 'chai'
 // endregion
 
 // region setup spirit-body
 const jsonParser = bodyParser({ json: true })
-const urlencodedParser = bodyParser({ urlEncoded: true })
+const formParser = bodyParser({ form: true })
 // endregion
 
 // region test
@@ -20,15 +20,15 @@ beforeEach(() => {
 // #endregion
 
 // #region test UrlEncoded
-describe('urlencodedParser', () => {
+describe('formParser', () => {
 	beforeEach(() => {
 		request.headers = {
-			'Content-Type': 'application/x-www-form-urlencoded'
+			'content-type': 'application/x-www-form-urlencoded'
 		}
 	})
 
 	it('should return an object', () => {
-		const prom = urlencodedParser(id => id)(request)
+		const prom = formParser(id => id)(request)
 		request.req().emit('data', Buffer.from('{}'))
 		request.req().emit('end')
 		return prom.then(response =>
@@ -37,7 +37,7 @@ describe('urlencodedParser', () => {
 	})
 
 	it('parse a form with one key', () => {
-		const prom = urlencodedParser(id => id)(request)
+		const prom = formParser(id => id)(request)
 		request.req().emit('data', Buffer.from('key='))
 		request.req().emit('end')
 		return prom.then(response =>
@@ -46,7 +46,7 @@ describe('urlencodedParser', () => {
 	})
 
 	it('should decode URI components', () => {
-		const prom = urlencodedParser(id => id)(request)
+		const prom = formParser(id => id)(request)
 		request.req().emit('data', Buffer.from('key=!%40%23%24%25%5E%26*()_%2B'))
 		request.req().emit('end')
 		return prom.then(response =>
@@ -55,7 +55,7 @@ describe('urlencodedParser', () => {
 	})
 
 	it('should eliminate "+" from the body', () => {
-		const prom = urlencodedParser(id => id)(request)
+		const prom = formParser(id => id)(request)
 		request.req().emit('data', Buffer.from('key=plus+delimited+input'))
 		request.req().emit('end')
 		return prom.then(response =>
@@ -64,7 +64,7 @@ describe('urlencodedParser', () => {
 	})
 
 	it('should parse multikey forms', () => {
-		const prom = urlencodedParser(id => id)(request)
+		const prom = formParser(id => id)(request)
 		request.req().emit('data',
 			Buffer.from('key1=some+value&key2=another+value'))
 		request.req().emit('end')
@@ -82,7 +82,7 @@ describe('urlencodedParser', () => {
 describe('jsonParser', () => {
 	beforeEach(() => {
 		request.headers = {
-			'Content-Type': 'application/json'
+			'content-type': 'application/json; charset=utf-8'
 		}
 	})
 

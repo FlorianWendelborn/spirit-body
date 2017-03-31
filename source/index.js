@@ -1,5 +1,22 @@
+import contentType from 'content-type'
+import body from 'raw-body'
+
+const httpError = error => ({
+	status: 400,
+	body: JSON.stringify({
+		error
+	}, null, '\t'),
+	headers: {
+		'Content-Type': 'application/json; charset=utf-8'
+	}
+})
+
+const bodyPromise = (req, options) => new Promise((resolve, reject) => {
+	body(req, options, (error, data) => error ? reject(error) : resolve(data))
+})
+
 /**
- * @description Body-Parsing Middleware
+ * @description Body-parsing middleware
  * This is a curried function with options, so you have to
  * call it once before passing it to spirit
  * @param {Object} options The parsing components to be used.
@@ -8,48 +25,56 @@
  */
 export default (options = {
 	json: false,
-	urlEncoded: false
-}) => handler => request => new Promise((resolve, reject) => {
-	const req = request.req()
+	form: false,
+	text: false,
+	limit: 4 * 1024 * 1024,
+	error: true
+}) => handler => async request => {
+	if (!request.headers['content-type']) {
+		if (options.error) throw httpError('No Content-Type.')
+		return request
+	}
 
-	// Push to array for (most likely) improved concatenation performance
-	const chunks = []
-	req.on('data', data => chunks.push(data))
+	const {type, parameters: {charset: encoding}} = contentType.parse(request.headers['content-type'])
 
-	// connection ended
-	req.on('end', () => {
-		// concat the chunks and convert to String — that's ok, because
-		// we only receive plaintext. Buffer defaults to UTF-8.
-		// TODO: check for other encodings
-		const raw = Buffer.concat(chunks).toString()
-
-		// convert the headers to lowercase for easier comparison
-		const lowercaseHeaders = Object
-			.keys(request.headers)
-			.map(key => ({
-				[key.toLowerCase()]: request.headers[key],
+	if (options.json && type === 'application/json') {
+		try {
+			request.body = JSON.parse(await bodyPromise(request.req(), {
+				length: request.headers['content-length'],
+				limit: options.limit,
+				encoding
 			}))
-			.reduce((previous, current) => Object.assign(previous, current), {})
-
-		const [type] = (lowercaseHeaders['content-type'] || '').split(';')
-		if (options.urlEncoded && type === 'application/x-www-form-urlencoded') {
-			const result = {}
-			const keyValueRegex = /([^&=]+)=?([^&]*)/g
-			const sanitize = input => decodeURIComponent(input.replace(/[+]/g, ' '))
-
-			let match
-			while (match = keyValueRegex.exec(raw)) {
-				const [, key, value] = match.map(sanitize)
-				result[key] = value
-			}
-			request.body = result
-		} else if (options.json &&
-				['application/json', 'text/json'].includes(type)) {
-			request.body = JSON.parse(raw)
-		} else {
-			request.body = raw
+		} catch (error) {
+			if (options.error) throw httpError('Invalid JSON.')
 		}
+	} else if (options.form && type === 'application/x-www-form-urlencoded') {
+		try {
+			// request.body = await promisify(formBody, request.req(), {
+			// 	limit: options.limit
+			// })
+		} catch (error) {
+			console.error(error)
+			if (options.error) throw httpError('Invalid form.')
+		}
+	} else if (options.text) {
+		try {
+			// request.body = await promisify(textBody, request.req(), {
+			// 	limit: options.limit
+			// })
+		} catch (error) {
+			if (options.error) throw httpError('Invalid body.')
+		}
+	} else {
+		if (options.error) throw {
+			status: 415,
+			body: JSON.stringify({
+				error: 'Unsupported Media Type'
+			}, null, '\t'),
+			headers: {
+				'Content-Type': 'application/json; charset=utf-8'
+			}
+		}
+	}
 
-		resolve(handler(request))
-	})
-})
+	return request
+}
