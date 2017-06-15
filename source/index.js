@@ -45,7 +45,11 @@ export default (options = {
 			request.body = result
 		} else if (options.json &&
 				['application/json', 'text/json'].includes(type)) {
-			request.body = JSON.parse(raw)
+					try {
+						request.body = JSON.parse(raw)
+					} catch (error) {
+						request.body = ''
+					}
 		} else {
 			request.body = raw
 		}
