@@ -1,12 +1,14 @@
 // region import
 import bodyParser from '../source'
 import events from 'events'
-import {expect} from 'chai'
+import { expect } from 'chai'
 // endregion
 
 // region setup spirit-body
-const jsonParser = bodyParser({ json: true })
 const formParser = bodyParser({ form: true })
+const jsonParser = bodyParser({ json: true, error: false })
+const jsonParserError = bodyParser({ json: true, error: true })
+const textParser = bodyParser({ text: true })
 // endregion
 
 // region test
@@ -31,9 +33,7 @@ describe('formParser', () => {
 		const prom = formParser(id => id)(request)
 		request.req().emit('data', Buffer.from('{}'))
 		request.req().emit('end')
-		return prom.then(response =>
-			expect(response).to.be.a('object')
-		)
+		return prom.then(response => expect(response).to.be.a('object'))
 	})
 
 	it('parse a form with one key', () => {
@@ -65,13 +65,14 @@ describe('formParser', () => {
 
 	it('should parse multikey forms', () => {
 		const prom = formParser(id => id)(request)
-		request.req().emit('data',
-			Buffer.from('key1=some+value&key2=another+value'))
+		request
+			.req()
+			.emit('data', Buffer.from('key1=some+value&key2=another+value'))
 		request.req().emit('end')
 		return prom.then(response =>
 			expect(response.body).to.eql({
 				key1: 'some value',
-				key2: 'another value',
+				key2: 'another value'
 			})
 		)
 	})
@@ -90,18 +91,14 @@ describe('jsonParser', () => {
 		const prom = jsonParser(id => id)(request)
 		request.req().emit('data', Buffer.from('{}'))
 		request.req().emit('end')
-		return prom.then(response =>
-			expect(response).to.be.a('object')
-		)
+		return prom.then(response => expect(response).to.be.a('object'))
 	})
 
-	it('parse a form with one key', () => {
+	it('should parse a form with one key', () => {
 		const prom = jsonParser(id => id)(request)
 		request.req().emit('data', Buffer.from('{ "key": "value"}'))
 		request.req().emit('end')
-		return prom.then(response =>
-			expect(response.body.key).to.equal('value')
-		)
+		return prom.then(response => expect(response.body.key).to.equal('value'))
 	})
 
 	it('should parse multikey forms', () => {
@@ -115,12 +112,57 @@ describe('jsonParser', () => {
 				}
 			}
 		}
-		request.req().emit('data', Buffer.from(
-			JSON.stringify(expected)
-		))
+		request.req().emit('data', Buffer.from(JSON.stringify(expected)))
+		request.req().emit('end')
+		return prom.then(response => expect(response.body).to.eql(expected))
+	})
+
+	it('should handle invalid json (flag)', () => {
+		const prom = jsonParser(id => id)(request)
+		request.req().emit('data', Buffer.from('"'))
+		request.req().emit('end')
+		return prom.then(response => {
+			expect(response.invalidBody).to.eql(true)
+			expect(response.body).to.eql(undefined)
+		})
+	})
+
+	it('should handle invalid json (400)', () => {
+		const prom = jsonParserError(id => id)(request)
+		request.req().emit('data', Buffer.from('"'))
+		request.req().emit('end')
+		return prom.then(response => {
+			expect(JSON.parse(response.body)).to.eql({ error: 'Invalid JSON.' })
+			expect(response.status).to.eql(400)
+			expect(response.headers['Content-Type']).to.eql(
+				'application/json; charset=utf-8'
+			)
+		})
+	})
+})
+// #endregion
+
+// #region test text
+describe('textParser', () => {
+	beforeEach(() => {
+		request.headers = {
+			'content-type': 'text/plain; charset=utf-8'
+		}
+	})
+
+	it('should return an object', () => {
+		const prom = textParser(id => id)(request)
+		request.req().emit('data', Buffer.from('arbitrary-string'))
+		request.req().emit('end')
+		return prom.then(response => expect(response).to.be.a('object'))
+	})
+
+	it('should parse arbitrary strings', () => {
+		const prom = textParser(id => id)(request)
+		request.req().emit('data', Buffer.from('arbitrary-string'))
 		request.req().emit('end')
 		return prom.then(response =>
-			expect(response.body).to.eql(expected)
+			expect(response.body).to.equal('arbitrary-string')
 		)
 	})
 })
