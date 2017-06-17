@@ -33,6 +33,20 @@ route.wrap(
 )
 ```
 
+## Errors
+
+If body parsing failed `spirit-body` will set `request.invalidBody` to `true`. If `options.error` is true `spirit-body` will automatically respond with `400 Bad Request`. Otherwise `request.body` will be `undefined`.
+
+## Options
+
+|  Name | Description                        | Values                         |
+|------:|:-----------------------------------|:-------------------------------|
+| error | enable `400 Bad Request` responses | `false`, **`true`**            |
+|  form | enable form-parsing                | **`false`**, `true`            |
+|  json | enable json-parsing                | **`false`**, `true`            |
+|  text | enable text-parsing                | **`false`**, `true`            |
+| limit | body size limit                    | **`4*1024*1024`**, `1024`, ... |
+
 ## Install
 
 With [npm](https://npmjs.org/) installed, run

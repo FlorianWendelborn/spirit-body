@@ -1,55 +1,102 @@
+import body from 'raw-body'
+import contentType from 'content-type'
+
+const httpError = error => ({
+	status: 400,
+	body: JSON.stringify(
+		{
+			error
+		},
+		null,
+		'\t'
+	),
+	headers: {
+		'Content-Type': 'application/json; charset=utf-8'
+	}
+})
+
+const bodyPromise = (req, options) =>
+	new Promise((resolve, reject) => {
+		body(req, options, (error, data) => (error ? reject(error) : resolve(data)))
+	})
+
 /**
- * @description Body-Parsing Middleware
+ * @description Body-parsing middleware
  * This is a curried function with options, so you have to
  * call it once before passing it to spirit
  * @param {Object} options The parsing components to be used.
  * @return {function} Middleware to be used.
  * @example const body = spiritBody({json: true, urlEncoded: true})
  */
-export default (options = {
-	json: false,
-	urlEncoded: false
-}) => handler => request => new Promise((resolve, reject) => {
-	const req = request.req()
+export default (_options = {}) => handler => async request => {
+	const options = Object.assign(
+		{
+			json: false,
+			form: false,
+			text: false,
+			limit: 4 * 1024 * 1024,
+			error: true
+		},
+		_options
+	)
+	if (!request.headers['content-type']) {
+		if (options.error) throw httpError('No Content-Type.')
+		return request
+	}
 
-	// Push to array for (most likely) improved concatenation performance
-	const chunks = []
-	req.on('data', data => chunks.push(data))
+	const { type, parameters: { charset: encoding } } = contentType.parse(
+		request.headers['content-type']
+	)
 
-	// connection ended
-	req.on('end', () => {
-		// concat the chunks and convert to String — that's ok, because
-		// we only receive plaintext. Buffer defaults to UTF-8.
-		// TODO: check for other encodings
-		const raw = Buffer.concat(chunks).toString()
-
-		// convert the headers to lowercase for easier comparison
-		const lowercaseHeaders = Object
-			.keys(request.headers)
-			.map(key => ({
-				[key.toLowerCase()]: request.headers[key],
-			}))
-			.reduce((previous, current) => Object.assign(previous, current), {})
-
-		const [type] = (lowercaseHeaders['content-type'] || '').split(';')
-		if (options.urlEncoded && type === 'application/x-www-form-urlencoded') {
-			const result = {}
-			const keyValueRegex = /([^&=]+)=?([^&]*)/g
-			const sanitize = input => decodeURIComponent(input.replace(/[+]/g, ' '))
-
-			let match
-			while (match = keyValueRegex.exec(raw)) {
-				const [, key, value] = match.map(sanitize)
-				result[key] = value
-			}
-			request.body = result
-		} else if (options.json &&
-				['application/json', 'text/json'].includes(type)) {
-			request.body = JSON.parse(raw)
-		} else {
-			request.body = raw
+	if (options.json && type === 'application/json') {
+		try {
+			request.body = JSON.parse(
+				await bodyPromise(request.req(), {
+					length: request.headers['content-length'],
+					limit: options.limit,
+					encoding
+				})
+			)
+		} catch (error) {
+			request.invalidBody = true
+			if (options.error) return httpError('Invalid JSON.')
 		}
+	} else if (options.form && type === 'application/x-www-form-urlencoded') {
+		try {
+			// request.body = await promisify(formBody, request.req(), {
+			// 	limit: options.limit
+			// })
+		} catch (error) {
+			request.invalidBody = true
+			if (options.error) return httpError('Invalid form.')
+		}
+	} else if (options.text) {
+		try {
+			request.body = await bodyPromise(request.req(), {
+				lenght: request.headers['content-length'],
+				limit: options.limit,
+				encoding
+			})
+		} catch (error) {
+			request.invalidBody = true
+			if (options.error) return httpError('Invalid body.')
+		}
+	} else {
+		if (options.error)
+			return {
+				status: 415,
+				body: JSON.stringify(
+					{
+						error: 'Unsupported Media Type'
+					},
+					null,
+					'\t'
+				),
+				headers: {
+					'Content-Type': 'application/json; charset=utf-8'
+				}
+			}
+	}
 
-		resolve(handler(request))
-	})
-})
+	return handler(request)
+}
