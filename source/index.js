@@ -46,7 +46,7 @@ export default (_options = {}) => handler => async request => {
 		(!request.headers['content-length'] ||
 			request.headers['content-length'] === '0')
 	)
-		return request
+		return handler(request)
 
 	// detect encoding
 	const { type, parameters: { charset: encoding } } = contentType.parse(
