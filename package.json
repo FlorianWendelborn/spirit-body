@@ -54,5 +54,5 @@
     "watch-example": "nodemon --watch example --watch source --exec \"yarn run build && yarn run example\"",
     "watch-test": "mocha --require babel-register --watch test"
   },
-  "version": "1.1.0"
+  "version": "1.2.0"
 }
