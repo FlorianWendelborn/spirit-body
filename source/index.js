@@ -35,28 +35,39 @@ export default (_options = {}) => handler => async request => {
 			form: false,
 			text: false,
 			limit: 4 * 1024 * 1024,
-			error: true
+			error: true,
+			allowEmptyBody: true
 		},
 		_options
 	)
-	if (!request.headers['content-type']) {
-		if (options.error) throw httpError('No Content-Type.')
-		return request
-	}
 
+	if (
+		options.allowEmptyBody &&
+		(!request.headers['content-length'] ||
+			request.headers['content-length'] === '0')
+	)
+		return request
+
+	// detect encoding
 	const { type, parameters: { charset: encoding } } = contentType.parse(
 		request.headers['content-type']
 	)
 
+	// retrieve raw body
+	const body = await bodyPromise(request.req(), {
+		lenght: request.headers['content-length'],
+		limit: options.limit,
+		encoding
+	})
+
+	if (!request.headers['content-type']) {
+		if (options.error) return httpError('No Content-Type.')
+		return request
+	}
+
 	if (options.json && type === 'application/json') {
 		try {
-			request.body = JSON.parse(
-				await bodyPromise(request.req(), {
-					length: request.headers['content-length'],
-					limit: options.limit,
-					encoding
-				})
-			)
+			request.body = JSON.parse(body)
 		} catch (error) {
 			request.invalidBody = true
 			if (options.error) return httpError('Invalid JSON.')
@@ -72,11 +83,7 @@ export default (_options = {}) => handler => async request => {
 		}
 	} else if (options.text) {
 		try {
-			request.body = await bodyPromise(request.req(), {
-				lenght: request.headers['content-length'],
-				limit: options.limit,
-				encoding
-			})
+			request.body = body
 		} catch (error) {
 			request.invalidBody = true
 			if (options.error) return httpError('Invalid body.')

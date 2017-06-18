@@ -39,13 +39,14 @@ If body parsing failed `spirit-body` will set `request.invalidBody` to `true`. I
 
 ## Options
 
-|  Name | Description                        | Values                         |
-|------:|:-----------------------------------|:-------------------------------|
-| error | enable `400 Bad Request` responses | `false`, **`true`**            |
-|  form | enable form-parsing                | **`false`**, `true`            |
-|  json | enable json-parsing                | **`false`**, `true`            |
-|  text | enable text-parsing                | **`false`**, `true`            |
-| limit | body size limit                    | **`4*1024*1024`**, `1024`, ... |
+|           Name | Description                             | Values                         |
+|---------------:|:----------------------------------------|:-------------------------------|
+| allowEmptyBody | ignores requests without content-length | **`true`**, `false`            |
+|          error | enable `400 Bad Request` responses      | `false`, **`true`**            |
+|           form | enable form-parsing                     | **`false`**, `true`            |
+|           json | enable json-parsing                     | **`false`**, `true`            |
+|           text | enable text-parsing                     | **`false`**, `true`            |
+|          limit | body size limit                         | **`4*1024*1024`**, `1024`, ... |
 
 ## Install
 
