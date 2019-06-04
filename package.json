@@ -20,7 +20,7 @@
     "chai": "^4.0.2",
     "coveralls": "^3.0.3",
     "istanbul": "^0.4.5",
-    "mocha": "^3.4.2",
+    "mocha": "^6.1.4",
     "nodemon": "^1.11.0",
     "spirit": "^0.6.0",
     "spirit-router": "^0.5.0"
